@@ -72,6 +72,8 @@ public class Contact
 
 }
 
+[CompositeColumn(name="fullName", expression=":first_name || ' ' || :last_name")]
+
 
 FlexORM supports the following features:
 
