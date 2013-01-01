@@ -11,12 +11,7 @@ package nz.co.codec.flexorm.command
     {
         private var _syncSupport:Boolean;
 
-        public function UpdateCommand(
-            sqlConnection:SQLConnection,
-            schema:String,
-            table:String,
-            syncSupport:Boolean=false,
-            debugLevel:int=0)
+        public function UpdateCommand(sqlConnection:SQLConnection, schema:String, table:String, syncSupport:Boolean = false, debugLevel:int = 0)
         {
             super(sqlConnection, schema, table, debugLevel);
             _syncSupport = syncSupport;

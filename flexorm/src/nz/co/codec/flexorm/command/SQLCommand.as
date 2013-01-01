@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2011.
+ * @author - Seyran Sitshayev <seyrancom@gmail.com>
+ */
+
 package nz.co.codec.flexorm.command
 {
     import flash.data.SQLConnection;
@@ -5,12 +10,14 @@ package nz.co.codec.flexorm.command
     import flash.events.SQLErrorEvent;
     import flash.events.SQLEvent;
     import flash.utils.getQualifiedClassName;
+    import flash.utils.getTimer;
 
     import mx.rpc.IResponder;
 
     import nz.co.codec.flexorm.EntityErrorEvent;
     import nz.co.codec.flexorm.EntityEvent;
     import nz.co.codec.flexorm.ICommand;
+    import nz.co.codec.flexorm.SQLDebugLevel;
     import nz.co.codec.flexorm.criteria.EqualsCondition;
     import nz.co.codec.flexorm.criteria.IFilter;
     import nz.co.codec.flexorm.criteria.SQLCondition;
@@ -37,7 +44,7 @@ package nz.co.codec.flexorm.command
 
         protected var _responded:Boolean;
 
-        public function SQLCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int=0)
+        public function SQLCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int = 0)
         {
             _sqlConnection = sqlConnection;
             _schema = schema;
@@ -45,6 +52,7 @@ package nz.co.codec.flexorm.command
             _debugLevel = debugLevel;
             _statement = new SQLStatement();
             _statement.sqlConnection = sqlConnection;
+            _changed = true;
             _changed = true;
             _responded = false;
             _columns = {};
@@ -86,7 +94,7 @@ package nz.co.codec.flexorm.command
             _changed = true;
         }
 
-        public function addColumn(column:String, param:String=null, table:String=null):void
+        public function addColumn(column:String, param:String = null, table:String = null):void
         {
             if (param == null)
             {
@@ -111,7 +119,7 @@ package nz.co.codec.flexorm.command
             return _columns;
         }
 
-        public function addFilter(column:String, param:String, table:String=null):void
+        public function addFilter(column:String, param:String, table:String = null):void
         {
             if (table == null)
             {
@@ -141,10 +149,24 @@ package nz.co.codec.flexorm.command
             else
             {
                 throw new Error("Null argument supplied to "
-                    + getQualifiedClassName(this) + ".addEqualsCondition ");
+                        + getQualifiedClassName(this) + ".addEqualsCondition ");
             }
             _changed = true;
         }
+
+        /*        public function addInCondition(table:String, column:String):void
+         {
+         if (table && column)
+         {
+         _filters.push(new InCondition(table, column));
+         }
+         else
+         {
+         throw new Error("Null argument supplied to "
+         + getQualifiedClassName(this) + ".addEqualsCondition ");
+         }
+         _changed = true;
+         }*/
 
         public function addSQLCondition(sql:String):void
         {
@@ -155,7 +177,7 @@ package nz.co.codec.flexorm.command
             else
             {
                 throw new Error("Null argument supplied to "
-                    + getQualifiedClassName(this) + ".addSQLCondition ");
+                        + getQualifiedClassName(this) + ".addSQLCondition ");
             }
             _changed = true;
         }
@@ -166,17 +188,38 @@ package nz.co.codec.flexorm.command
         }
 
         // abstract
-        protected function prepareStatement():void { }
+        protected function prepareStatement():void
+        {
+        }
+
+        public function setItemClass(itemClass:Class):void
+        {
+            if (itemClass)
+            {
+                _statement.itemClass = itemClass;
+            }
+        }
 
         public function execute():void
         {
             if (_changed)
                 prepareStatement();
 
-            if (_debugLevel > 0)
+            if (_debugLevel >= SQLDebugLevel.INFO)
+            {
+                var time:Number = getTimer();
+            }
+            if (_debugLevel >= SQLDebugLevel.DEBUG)
+            {
                 debug();
+            }
 
             _statement.execute();
+
+            if (_debugLevel >= SQLDebugLevel.INFO)
+            {
+                trace("SQL Execute Time:", getTimer() - time, "ms");
+            }
         }
 
         protected function set debugLevel(value:int):void
@@ -188,6 +231,5 @@ package nz.co.codec.flexorm.command
         {
             trace(this);
         }
-
     }
 }

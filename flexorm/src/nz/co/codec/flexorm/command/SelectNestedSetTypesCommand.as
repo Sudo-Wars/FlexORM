@@ -7,12 +7,12 @@ package nz.co.codec.flexorm.command
     {
         private var _result:Array;
 
-        public function SelectNestedSetTypesCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int=0)
+        public function SelectNestedSetTypesCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int = 0)
         {
             super(sqlConnection, schema, table, debugLevel);
             _statement.text = "select distinct entity_type from " +
-                schema + "." + table +
-                " where lft>:lft and rgt<:rgt order by lft";
+                    schema + "." + table +
+                    " where lft>:lft and rgt<:rgt order by lft";
         }
 
         override public function execute():void

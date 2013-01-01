@@ -1,8 +1,15 @@
+/*
+ * Copyright (c) 2011.
+ * @author - Seyran Sitshayev <seyrancom@gmail.com>
+ */
+
 package nz.co.codec.flexorm
 {
     public class Tags
     {
         public static const ELEM_COLUMN:String = "Column";
+
+        public static const ELEM_COMPOSITE_COLUMN:String = "CompositeColumn";
 
         public static const ELEM_ID:String = "Id";
 
@@ -15,6 +22,8 @@ package nz.co.codec.flexorm
         public static const ELEM_TABLE:String = "Table";
 
         public static const ELEM_TRANSIENT:String = "Transient";
+
+        public static const ATTR_EXPRESSION:String = "expression";
 
         public static const ATTR_CASCADE:String = "cascade";
 
@@ -29,6 +38,8 @@ package nz.co.codec.flexorm
         public static const ATTR_INDEX_COLUMN:String = "indexColumn";
 
         public static const ATTR_INHERITS_FROM:String = "inheritsFrom";
+
+        public static const ATTR_ALLOW_INHERIT_COLUMN:String = "allowInheritColumn";
 
         public static const ATTR_INVERSE:String = "inverse";
 

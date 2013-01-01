@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2011.
+ * @author - Seyran Sitshayev <seyrancom@gmail.com>
+ */
+
 package nz.co.codec.flexorm
 {
     import flash.data.SQLConnection;
@@ -7,7 +12,6 @@ package nz.co.codec.flexorm
     import flash.utils.getDefinitionByName;
     import flash.utils.getQualifiedClassName;
 
-    import mx.collections.ArrayCollection;
     import mx.collections.IList;
     import mx.rpc.IResponder;
     import mx.rpc.Responder;
@@ -146,47 +150,47 @@ package nz.co.codec.flexorm
             var commitCommand:CommitCommand = new CommitCommand(sqlConnection);
             commitCommand.responder = new Responder(
 
-                function(event:EntityEvent):void
-                {
-                    responder.result(event);
-                    inTransaction = false;
-                },
-
-                function(error:EntityErrorEvent):void
-                {
-                    if (sqlConnection.inTransaction)
+                    function(event:EntityEvent):void
                     {
-                        var rollbackCommand:RollbackCommand = new RollbackCommand(sqlConnection);
-                        rollbackCommand.responder = new Responder(
+                        responder.result(event);
+                        inTransaction = false;
+                    },
 
-                            function(ev:EntityEvent):void
-                            {
-                                error.message = "Rollback successful: " + error.message;
-                                responder.fault(error);
-                            },
-
-                            function(e:EntityErrorEvent):void
-                            {
-                                trace("Rollback failed!!!");
-                                error.message = e.message + ": " + error.message;
-                                responder.fault(error);
-                            }
-                        );
-                    }
-                    else
+                    function(error:EntityErrorEvent):void
                     {
-                        responder.fault(error);
+                        if (sqlConnection.inTransaction)
+                        {
+                            var rollbackCommand:RollbackCommand = new RollbackCommand(sqlConnection);
+                            rollbackCommand.responder = new Responder(
+
+                                    function(ev:EntityEvent):void
+                                    {
+                                        error.message = "Rollback successful: " + error.message;
+                                        responder.fault(error);
+                                    },
+
+                                    function(e:EntityErrorEvent):void
+                                    {
+                                        trace("Rollback failed!!!");
+                                        error.message = e.message + ": " + error.message;
+                                        responder.fault(error);
+                                    }
+                            );
+                        }
+                        else
+                        {
+                            responder.fault(error);
+                        }
+                        inTransaction = false;
                     }
-                    inTransaction = false;
-                }
             );
         }
 
         private function getEntityForObject(obj:Object, q:BlockingExecutor):Entity
         {
             var c:Class = (obj is PersistentEntity) ?
-                obj.__class :
-                Class(getDefinitionByName(getQualifiedClassName(obj)));
+                    obj.__class :
+                    Class(getDefinitionByName(getQualifiedClassName(obj)));
             return getEntity(c, q);
         }
 
@@ -202,7 +206,7 @@ package nz.co.codec.flexorm
             return entity;
         }
 
-        private function createBlockingExecutor(responder:IResponder, finalHandler:Function=null):BlockingExecutor
+        private function createBlockingExecutor(responder:IResponder, finalHandler:Function = null):BlockingExecutor
         {
             var q:BlockingExecutor = new BlockingExecutor();
             q.debugLevel = debugLevel;
@@ -246,25 +250,21 @@ package nz.co.codec.flexorm
                 if (a.indexed)
                     items.sortOn("index");
 
-                var result:ArrayCollection = new ArrayCollection();
+                var result:Array = new Array();
                 for each(var it:Object in items)
                 {
-                    result.addItem(typeObject(it.row, it.associatedEntity, q));
+                    result.push(typeObject(it.row, it.associatedEntity, q));
                 }
                 q.data = result;
-            };
+            }
+
             for each(var type:AssociatedType in a.associatedTypes)
             {
                 loadAssociatedType(a, items, type, idMap, q);
             }
         }
 
-        private function loadAssociatedType(
-            a:OneToManyAssociation,
-            items:Array,
-            type:AssociatedType,
-            idMap:Object,
-            q:BlockingExecutor):void
+        private function loadAssociatedType(a:OneToManyAssociation, items:Array, type:AssociatedType, idMap:Object, q:BlockingExecutor):void
         {
             var associatedEntity:Entity = type.associatedEntity;
             var selectCommand:SelectCommand = type.selectCommand.clone();
@@ -291,24 +291,18 @@ package nz.co.codec.flexorm
                         for each(row in data)
                         {
                             items.push(
-                            {
-                                associatedEntity: associatedEntity,
-                                index           : row[a.indexColumn],
-                                row             : row
-                            });
+                                    {
+                                        associatedEntity: associatedEntity,
+                                        index           : row[a.indexColumn],
+                                        row             : row
+                                    });
                         }
                     }
                 }
             });
         }
 
-        private function loadSubtype(
-            a:OneToManyAssociation,
-            items:Array,
-            associatedEntity:Entity,
-            subtype:String,
-            idMap:Object,
-            q:BlockingExecutor):void
+        private function loadSubtype(a:OneToManyAssociation, items:Array, associatedEntity:Entity, subtype:String, idMap:Object, q:BlockingExecutor):void
         {
             var subClass:Class = getDefinitionByName(subtype) as Class;
             var subEntity:Entity = getEntity(subClass, q);
@@ -335,11 +329,11 @@ package nz.co.codec.flexorm
                 for each(var row:Object in data)
                 {
                     items.push(
-                    {
-                        associatedEntity: subEntity,
-                        index           : row[a.indexColumn],
-                        row             : row
-                    });
+                            {
+                                associatedEntity: subEntity,
+                                index           : row[a.indexColumn],
+                                row             : row
+                            });
                 }
             });
         }
@@ -375,7 +369,7 @@ package nz.co.codec.flexorm
             if (entity.hasCompositeKey())
             {
                 throw new Error("Entity '" + entity.name + "' has a composite key. " +
-                                "Use EntityManagerAsync.loadItemByCompositeKey instead. ");
+                        "Use EntityManagerAsync.loadItemByCompositeKey instead. ");
             }
             loadComplexEntity(entity, getIdentityMap(entity.fkProperty, id), q);
             q.execute();
@@ -405,8 +399,8 @@ package nz.co.codec.flexorm
                                 throw new Error("Cannot find entity of type " + subtype);
 
                             var map:Object = entity.hasCompositeKey() ?
-                                getIdentityMapFromRow(row, subEntity) :
-                                getIdentityMap(subEntity.fkProperty, idMap[entity.fkProperty]);
+                                    getIdentityMapFromRow(row, subEntity) :
+                                    getIdentityMap(subEntity.fkProperty, idMap[entity.fkProperty]);
 
                             var value:Object = getCachedValue(subEntity, map);
                             if (value)
@@ -454,7 +448,7 @@ package nz.co.codec.flexorm
             if (!entity.hasCompositeKey())
             {
                 throw new Error("Entity '" + entity.name +
-                    "' does not have a composite key. Use EntityManagerAsync.loadItem instead. ");
+                        "' does not have a composite key. Use EntityManagerAsync.loadItem instead. ");
             }
             var idMap:Object = {};
             for each(var obj:Object in keys)
@@ -477,14 +471,14 @@ package nz.co.codec.flexorm
                 if (!match)
                 {
                     trace("Key of type '" + keyEntity.name +
-                          "' not specified as an identifier for '" + entity.name + "'. ");
+                            "' not specified as an identifier for '" + entity.name + "'. ");
 
                     for each(var a:Association in entity.manyToOneAssociations)
                     {
                         if (keyEntity.equals(a.associatedEntity))
                         {
                             trace("Key type '" + keyEntity.name +
-                                  "' is used in a many-to-one association, so will allow. ");
+                                    "' is used in a many-to-one association, so will allow. ");
                             match = true;
                             break;
                         }
@@ -550,7 +544,7 @@ package nz.co.codec.flexorm
          * - rootLft:int
          * - rootSpread:int
          */
-        public function save(obj:Object, responder:IResponder, opt:Object=null):void
+        public function save(obj:Object, responder:IResponder, opt:Object = null):void
         {
             if (obj == null)
                 return;
@@ -624,12 +618,7 @@ package nz.co.codec.flexorm
             }
         }
 
-        private function createItem(
-            insertCommand:InsertCommand,
-            obj:Object,
-            entity:Entity,
-            q:BlockingExecutor,
-            args:SaveRecursiveArgs):void
+        private function createItem(insertCommand:InsertCommand, obj:Object, entity:Entity, q:BlockingExecutor, args:SaveRecursiveArgs):void
         {
             saveManyToOneAssociations(obj, entity, q.branchNonBlocking());
             if (entity.superEntity)
@@ -679,7 +668,7 @@ package nz.co.codec.flexorm
                 {
                     if (a.indexed)
                     {
-                         // specified by client code
+                        // specified by client code
                         if ((a.ownerEntity.cls == args.ownerClass) && args.indexValue)
                         {
                             insertCommand.setParam(a.indexProperty, args.indexValue);
@@ -750,12 +739,7 @@ package nz.co.codec.flexorm
             }
         }
 
-        private function updateItem(
-            updateCommand:UpdateCommand,
-            obj:Object,
-            entity:Entity,
-            q:BlockingExecutor,
-            args:SaveRecursiveArgs):void
+        private function updateItem(updateCommand:UpdateCommand, obj:Object, entity:Entity, q:BlockingExecutor, args:SaveRecursiveArgs):void
         {
             saveManyToOneAssociations(obj, entity, q.branchNonBlocking());
             if (entity.superEntity)
@@ -777,7 +761,7 @@ package nz.co.codec.flexorm
                 {
                     if (a.indexed)
                     {
-                         // specified by client code
+                        // specified by client code
                         if ((a.ownerEntity.cls == args.ownerClass) && args.indexValue)
                         {
                             updateCommand.setParam(a.indexProperty, args.indexValue);
@@ -854,8 +838,8 @@ package nz.co.codec.flexorm
                         else
                         {
                             throw new Error("Attempting to save a collection " +
-                                            "item of a type not specified in " +
-                                            "the one-to-many association. ");
+                                    "item of a type not specified in " +
+                                    "the one-to-many association. ");
                         }
                     }
                 }
@@ -985,16 +969,16 @@ package nz.co.codec.flexorm
         {
             loadItem(cls, id, new Responder(
 
-                function(ev:EntityEvent):void
-                {
-                    remove(ev.data, responder);
-                },
+                    function(ev:EntityEvent):void
+                    {
+                        remove(ev.data, responder);
+                    },
 
-                function(e:EntityErrorEvent):void
-                {
-                    trace(e);
-                    responder.fault(e);
-                }
+                    function(e:EntityErrorEvent):void
+                    {
+                        trace(e);
+                        responder.fault(e);
+                    }
             ));
         }
 
@@ -1097,12 +1081,12 @@ package nz.co.codec.flexorm
             }
         }
 
-        private function typeArray(array:Array, entity:Entity, q:BlockingExecutor):ArrayCollection
+        private function typeArray(array:Array, entity:Entity, q:BlockingExecutor):Array
         {
-            var coll:ArrayCollection = new ArrayCollection();
+            var coll:Array = new Array();
             for each(var row:Object in array)
             {
-                coll.addItem(typeObject(row, entity, q));
+                coll.push(typeObject(row, entity, q));
             }
             return coll;
         }
@@ -1162,19 +1146,15 @@ package nz.co.codec.flexorm
             }
         }
 
-        private function loadSuperProperties(
-            instance:Object,
-            row:Object,
-            entity:Entity,
-            q:BlockingExecutor):void
+        private function loadSuperProperties(instance:Object, row:Object, entity:Entity, q:BlockingExecutor):void
         {
             var superEntity:Entity = entity.superEntity;
             if (superEntity == null)
                 return;
 
             var idMap:Object = entity.hasCompositeKey() ?
-                getIdentityMapFromRow(row, superEntity) :
-                getIdentityMap(superEntity.fkProperty, row[entity.pk.column]);
+                    getIdentityMapFromRow(row, superEntity) :
+                    getIdentityMap(superEntity.fkProperty, row[entity.pk.column]);
 
             var superInstance:Object = getCachedValue(superEntity, idMap);
             if (superInstance == null)
@@ -1197,7 +1177,7 @@ package nz.co.codec.flexorm
                 // commented out to populate a sub instance's inherited ID field
 //                if (superEntity.hasCompositeKey() || (f.property != superEntity.pk.property))
 //                {
-                    instance[f.property] = superInstance[f.property];
+                instance[f.property] = superInstance[f.property];
 //                }
             }
             for each(var mto:Association in superEntity.manyToOneAssociations)
@@ -1214,11 +1194,7 @@ package nz.co.codec.flexorm
             }
         }
 
-        private function setManyToOneAssociation(
-            instance:Object,
-            row:Object,
-            a:Association,
-            q:BlockingExecutor):void
+        private function setManyToOneAssociation(instance:Object, row:Object, a:Association, q:BlockingExecutor):void
         {
             var associatedEntity:Entity = a.associatedEntity;
             var value:Object = null;
@@ -1256,21 +1232,16 @@ package nz.co.codec.flexorm
             }
         }
 
-        private function setOneToManyAssociation(
-            instance:Object,
-            row:Object,
-            a:OneToManyAssociation,
-            entity:Entity,
-            q:BlockingExecutor):void
+        private function setOneToManyAssociation(instance:Object, row:Object, a:OneToManyAssociation, entity:Entity, q:BlockingExecutor):void
         {
             var idMap:Object = entity.hasCompositeKey() ?
-                getIdentityMapFromRow(row, entity) :
-                getIdentityMap(a.fkProperty, row[entity.pk.column]);
+                    getIdentityMapFromRow(row, entity) :
+                    getIdentityMap(a.fkProperty, row[entity.pk.column]);
             // Lazy Loading not supported using the Asynchronous API yet
 //			if (a.lazy)
 //			{
 //				var lazyList:LazyList = new LazyList(this, a, idMap);
-//				var value:ArrayCollection = new ArrayCollection();
+//				var value:Array = new Array();
 //				value.list = lazyList;
 //				instance[a.property] = value;
 //				lazyList.initialise();
@@ -1278,40 +1249,35 @@ package nz.co.codec.flexorm
 //			else
 //			{
 
-                // TODO optimise if not multiple types
+            // TODO optimise if not multiple forms
 
-                loadOneToManyAssociationInternal(a, idMap, q.branchBlocking());
-                q.addFunction(function(data:Object):void
-                {
-                    instance[a.property] = data.data;
-                });
+            loadOneToManyAssociationInternal(a, idMap, q.branchBlocking());
+            q.addFunction(function(data:Object):void
+            {
+                instance[a.property] = data.data;
+            });
 //			}
         }
 
-        private function setManyToManyAssociation(
-            instance:Object,
-            row:Object,
-            a:ManyToManyAssociation,
-            entity:Entity,
-            q:BlockingExecutor):void
+        private function setManyToManyAssociation(instance:Object, row:Object, a:ManyToManyAssociation, entity:Entity, q:BlockingExecutor):void
         {
             // Lazy Loading not supported using the Asynchronous API yet
 //			if (a.lazy)
 //			{
 //				var lazyList:LazyList = new LazyList(this, a, getIdentityMapFromRow(row, entity));
-//				var value:ArrayCollection = new ArrayCollection();
+//				var value:Array = new Array();
 //				value.list = lazyList;
 //				instance[a.property] = value;
 //				lazyList.initialise();
 //			}
 //			else
 //			{
-                var selectCommand:SelectCommand = a.selectCommand;
-                setIdentMapParams(selectCommand, getIdentityMapFromRow(row, entity));
-                q.add(selectCommand, function(data:Object):void
-                {
-                    instance[a.property] = typeArray(data as Array, a.associatedEntity, q);
-                });
+            var selectCommand:SelectCommand = a.selectCommand;
+            setIdentMapParams(selectCommand, getIdentityMapFromRow(row, entity));
+            q.add(selectCommand, function(data:Object):void
+            {
+                instance[a.property] = typeArray(data as Array, a.associatedEntity, q);
+            });
 //			}
         }
 
@@ -1365,7 +1331,7 @@ package nz.co.codec.flexorm
 
         private function debug(message:String):String
         {
-            if (debugLevel > 0)
+            if (debugLevel >= SQLDebugLevel.DEBUG)
             {
                 trace(message);
             }

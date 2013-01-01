@@ -8,11 +8,7 @@ package nz.co.codec.flexorm.command
 
     public class DeleteCommand extends SQLParameterisedCommand
     {
-        public function DeleteCommand(
-            sqlConnection:SQLConnection,
-            schema:String,
-            table:String,
-            debugLevel:int=0)
+        public function DeleteCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int = 0)
         {
             super(sqlConnection, schema, table, debugLevel);
         }

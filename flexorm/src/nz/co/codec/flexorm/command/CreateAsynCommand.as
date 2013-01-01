@@ -7,7 +7,6 @@ package nz.co.codec.flexorm.command
     import flash.events.SQLErrorEvent;
     import flash.events.SQLEvent;
 
-    import mx.collections.ArrayCollection;
     import mx.utils.StringUtil;
 
     import nz.co.codec.flexorm.BlockingExecutor;
@@ -20,11 +19,7 @@ package nz.co.codec.flexorm.command
 
         private var _pk:String;
 
-        public function CreateAsynCommand(
-            sqlConnection:SQLConnection,
-            schema:String,
-            table:String,
-            debugLevel:int=0)
+        public function CreateAsynCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int = 0)
         {
             super(sqlConnection, schema, table, debugLevel);
             _created = false;
@@ -43,17 +38,13 @@ package nz.co.codec.flexorm.command
             _changed = true;
         }
 
-        override public function addColumn(column:String, type:String=null, table:String=null):void
+        override public function addColumn(column:String, type:String = null, table:String = null):void
         {
             _columns[column] = { type: type };
             _changed = true;
         }
 
-        public function addForeignKey(
-            column:String,
-            type:String,
-            constraintTable:String,
-            constraintColumn:String):void
+        public function addForeignKey(column:String, type:String, constraintTable:String, constraintColumn:String):void
         {
             _columns[column] = {
                 type      : type,
@@ -87,7 +78,7 @@ package nz.co.codec.flexorm.command
             _sqlConnection.removeEventListener(SQLEvent.SCHEMA, loadSchemaResultHandler);
             _sqlConnection.removeEventListener(SQLErrorEvent.ERROR, loadSchemaErrorHandler);
             _changed = false;
-            var existingColumns:ArrayCollection = getExistingColumns(_sqlConnection.getSchemaResult());
+            var existingColumns:Array = getExistingColumns(_sqlConnection.getSchemaResult());
             if (existingColumns.length > 0)
             {
                 _created = true;
@@ -161,32 +152,32 @@ package nz.co.codec.flexorm.command
             }
         }
 
-        private function getExistingColumns(schemaResult:SQLSchemaResult):ArrayCollection
+        private function getExistingColumns(schemaResult:SQLSchemaResult):Array
         {
-            var existingColumns:ArrayCollection = new ArrayCollection();
+            var existingColumns:Array = new Array();
             // should have the one table requested or the errorHandler is called
             for each(var column:SQLColumnSchema in schemaResult.tables[0].columns)
             {
                 if (!column.primaryKey)
                 {
-                    existingColumns.addItem(column.name);
+                    existingColumns.push(column.name);
                 }
             }
             return existingColumns;
         }
 
-        private function buildAlterSQL(existingColumns:ArrayCollection):String
+        private function buildAlterSQL(existingColumns:Array):String
         {
             var sql:String = "";
             for (var column:String in _columns)
             {
-                if (!existingColumns.contains(column))
+                if (existingColumns.indexOf(column) == -1)
                 {
                     sql += StringUtil.substitute("alter table {0} add {1} {2};",
                             _table, column, _columns[column].type);
                 }
             }
-            return (sql.length > 0)? sql : null;
+            return (sql.length > 0) ? sql : null;
         }
 
         private function buildCreateSQL():String

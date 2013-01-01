@@ -2,8 +2,6 @@ package nz.co.codec.flexorm
 {
     import flash.data.SQLConnection;
 
-    import mx.collections.ArrayCollection;
-
     import nz.co.codec.flexorm.criteria.Criteria;
 
     public interface IEntityManager
@@ -12,13 +10,13 @@ package nz.co.codec.flexorm
 
         function endTransaction():void;
 
-        function findAll(cls:Class):ArrayCollection;
+        function findAll(cls:Class, useCache:Boolean = true):Array;
 
         function createCriteria(cls:Class):Criteria;
 
-        function fetchCriteria(crit:Criteria):ArrayCollection;
+        function fetchCriteria(crit:Criteria, useCache:Boolean = true):Array;
 
-        function fetchCriteriaFirstResult(crit:Criteria):Object;
+        function fetchCriteriaFirstResult(crit:Criteria, useCache:Boolean = true):Object;
 
         function load(cls:Class, id:*):Object;
 
@@ -26,9 +24,9 @@ package nz.co.codec.flexorm
 
         function loadItemByCompositeKey(cls:Class, keys:Array):Object;
 
-        function save(obj:Object, opt:Object=null):*;
+        function save(obj:Object, opt:Object = null):*;
 
-        function saveHierarchicalObject(obj:Object, opt:Object=null):Object;
+        function saveHierarchicalObject(obj:Object, opt:Object = null):Object;
 
         function removeItem(cls:Class, id:*):void;
 
@@ -50,6 +48,7 @@ package nz.co.codec.flexorm
 
         function get debugLevel():int;
 
+        function set prefs(hash:Object):void;
 
         // Not fully implemented ------------------------------
 

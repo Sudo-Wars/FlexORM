@@ -1,7 +1,5 @@
 package nz.co.codec.flexorm.metamodel
 {
-    import mx.collections.ArrayCollection;
-
     import nz.co.codec.flexorm.EntityManager;
 
     public dynamic class PersistentEntity

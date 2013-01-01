@@ -6,7 +6,6 @@ package nz.co.codec.flexorm.command
     import flash.data.SQLTableSchema;
     import flash.errors.SQLError;
 
-    import mx.collections.ArrayCollection;
     import mx.utils.StringUtil;
 
     import nz.co.codec.flexorm.metamodel.IDStrategy;
@@ -19,21 +18,17 @@ package nz.co.codec.flexorm.command
 
         private var _idColumn:String;
 
-        public function CreateSynCommand(
-            sqlConnection:SQLConnection,
-            schema:String,
-            table:String,
-            debugLevel:int=0)
+        public function CreateSynCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int = 0)
         {
             super(sqlConnection, schema, table, debugLevel);
             _created = false;
         }
 
-        public function setPrimaryKey(column:String, idStrategy:String):void
+        public function setPrimaryKey(column:String, idStrategy:String, type:String):void
         {
-            if (IDStrategy.UID == idStrategy)
+            if (IDStrategy.UID == idStrategy || IDStrategy.ASSIGNED == idStrategy)
             {
-                _pk = StringUtil.substitute("{0} string primary key", column);
+                _pk = StringUtil.substitute("{0} {1} primary key", column, type);
             }
             else
             {
@@ -43,17 +38,13 @@ package nz.co.codec.flexorm.command
             _changed = true;
         }
 
-        override public function addColumn(column:String, type:String=null, table:String=null):void
+        override public function addColumn(column:String, type:String = null, table:String = null):void
         {
             _columns[column] = { type: type };
             _changed = true;
         }
 
-        public function addForeignKey(
-            column:String,
-            type:String,
-            constraintTable:String,
-            constraintColumn:String):void
+        public function addForeignKey(column:String, type:String, constraintTable:String, constraintColumn:String):void
         {
             _columns[column] = {
                 type      : type,
@@ -68,7 +59,7 @@ package nz.co.codec.flexorm.command
         override protected function prepareStatement():void
         {
             var sql:String = null;
-            var existingColumns:ArrayCollection = getExistingColumns();
+            var existingColumns:Array = getExistingColumns();
             if (existingColumns)
             {
                 sql = buildAlterSQL(existingColumns);
@@ -83,7 +74,7 @@ package nz.co.codec.flexorm.command
             _changed = false;
         }
 
-        private function getExistingColumns():ArrayCollection
+        private function getExistingColumns():Array
         {
             try
             {
@@ -91,33 +82,35 @@ package nz.co.codec.flexorm.command
                 var schemaResult:SQLSchemaResult = _sqlConnection.getSchemaResult();
                 if (schemaResult.tables.length > 0)
                 {
-                    var existingColumns:ArrayCollection = new ArrayCollection();
+                    var existingColumns:Array = new Array();
                     for each(var column:SQLColumnSchema in schemaResult.tables[0].columns)
                     {
                         if (!column.primaryKey)
                         {
-                            existingColumns.addItem(column.name);
+                            existingColumns.push(column.name);
                         }
                     }
                     return existingColumns;
                 }
             }
-            catch (e:SQLError) { }
+            catch (e:SQLError)
+            {
+            }
             return null;
         }
 
-        private function buildAlterSQL(existingColumns:ArrayCollection):String
+        private function buildAlterSQL(existingColumns:Array):String
         {
             var sql:String = "";
             for (var column:String in _columns)
             {
-                if (!existingColumns.contains(column) && column != _idColumn)
+                if (existingColumns.indexOf(column) == -1 && column != _idColumn)
                 {
                     sql += StringUtil.substitute("alter table {0}.{1} add {2} {3};",
-                           _schema, _table, column, _columns[column].type);
+                            _schema, _table, column, _columns[column].type);
                 }
             }
-            return (sql.length > 0)? sql : null;
+            return (sql.length > 0) ? sql : null;
         }
 
         private function buildCreateSQL():String

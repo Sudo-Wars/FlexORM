@@ -44,13 +44,13 @@ package nz.co.codec.flexorm.metamodel
             var len:int = path.length;
             if (len > 1)
             {
-                var key:CompositeKey = path[len-2] as CompositeKey;
+                var key:CompositeKey = path[len - 2] as CompositeKey;
                 return key.associatedEntity;
             }
             return null;
         }
 
-        public function Identity(hash:Object=null)
+        public function Identity(hash:Object = null)
         {
             for (var key:String in hash)
             {

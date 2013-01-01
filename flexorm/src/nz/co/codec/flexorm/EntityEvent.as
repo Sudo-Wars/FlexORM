@@ -6,7 +6,7 @@ package nz.co.codec.flexorm
     {
         private var _data:Object;
 
-        public function EntityEvent(data:Object=null, bubbles:Boolean=false, cancelable:Boolean=false)
+        public function EntityEvent(data:Object = null, bubbles:Boolean = false, cancelable:Boolean = false)
         {
             super("entityChange", bubbles, cancelable);
             _data = data;

@@ -8,7 +8,7 @@ package nz.co.codec.flexorm
 
         private var _error:Error;
 
-        public function EntityErrorEvent(message:String, error:Error=null, bubbles:Boolean=false, cancelable:Boolean=false)
+        public function EntityErrorEvent(message:String, error:Error = null, bubbles:Boolean = false, cancelable:Boolean = false)
         {
             super("entityError", bubbles, cancelable);
             _message = message;
@@ -32,12 +32,12 @@ package nz.co.codec.flexorm
 
         public function getStackTrace():String
         {
-            return _error? _error.getStackTrace() : null;
+            return _error ? _error.getStackTrace() : null;
         }
 
         override public function toString():String
         {
-            return _message? _message : "unknown";
+            return _message ? _message : "unknown";
         }
 
     }

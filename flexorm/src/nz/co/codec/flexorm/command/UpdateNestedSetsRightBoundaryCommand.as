@@ -6,7 +6,7 @@ package nz.co.codec.flexorm.command
 
     public class UpdateNestedSetsRightBoundaryCommand extends SQLParameterisedCommand
     {
-        public function UpdateNestedSetsRightBoundaryCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int=0)
+        public function UpdateNestedSetsRightBoundaryCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int = 0)
         {
             super(sqlConnection, schema, table, debugLevel);
             _statement.text = StringUtil.substitute("update {0}.{1} set rgt=rgt+:inc where rgt>=:rgt", schema, table);

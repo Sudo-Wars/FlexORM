@@ -13,9 +13,12 @@ package nz.co.codec.flexorm.metamodel
     import nz.co.codec.flexorm.command.UpdateNestedSetsCommand;
     import nz.co.codec.flexorm.command.UpdateNestedSetsLeftBoundaryCommand;
     import nz.co.codec.flexorm.command.UpdateNestedSetsRightBoundaryCommand;
+    import nz.co.codec.flexorm.command.UtilsCommand;
 
     public class Entity implements IUID
     {
+        public var utilsCommand:UtilsCommand;
+
         public var selectCommand:SelectCommand;
 
         public var selectAllCommand:SelectCommand;
@@ -137,7 +140,9 @@ package nz.co.codec.flexorm.metamodel
             return _initialisationComplete;
         }
 
-        public function set uid(value:String):void { }
+        public function set uid(value:String):void
+        {
+        }
 
         public function get uid():String
         {
@@ -352,7 +357,7 @@ package nz.co.codec.flexorm.metamodel
             {
                 if (field.property == property)
                 {
-                    return { table: table, column: field.column };
+                    return { table: table, column: field.column, isCompositeColumn: field.isCompositeColumn};
                 }
             }
             if (superEntity)
@@ -545,6 +550,5 @@ package nz.co.codec.flexorm.metamodel
             }
             return false;
         }
-
     }
 }

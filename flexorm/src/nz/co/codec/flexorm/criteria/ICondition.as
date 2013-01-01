@@ -4,5 +4,7 @@ package nz.co.codec.flexorm.criteria
     {
         function get table():String;
 
+        function get isCompositeColumn():Boolean;
+
     }
 }

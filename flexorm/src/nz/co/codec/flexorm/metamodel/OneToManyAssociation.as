@@ -11,7 +11,7 @@ package nz.co.codec.flexorm.metamodel
          */
         public var selectCommand:SelectCommand;
 
-        public function OneToManyAssociation(hash:Object=null)
+        public function OneToManyAssociation(hash:Object = null)
         {
             super(hash);
         }

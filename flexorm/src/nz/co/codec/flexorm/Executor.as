@@ -1,7 +1,5 @@
 package nz.co.codec.flexorm
 {
-    import flash.utils.getQualifiedClassName;
-
     import mx.rpc.IResponder;
 
     public class Executor implements IExecutor
@@ -55,9 +53,11 @@ package nz.co.codec.flexorm
         }
 
         // abstract
-        public function execute():void { }
+        public function execute():void
+        {
+        }
 
-        public function add(command:ICommand, resultHandler:Function=null):void
+        public function add(command:ICommand, resultHandler:Function = null):void
         {
             childCount++;
             q.push(command);
@@ -75,7 +75,7 @@ package nz.co.codec.flexorm
 
         public function get parent():IExecutor
         {
-            return (_responder is IExecutor)? IExecutor(_responder) : null;
+            return (_responder is IExecutor) ? IExecutor(_responder) : null;
         }
 
         public function setProperty(name:String, value:*):void
@@ -134,7 +134,9 @@ package nz.co.codec.flexorm
         }
 
         // abstract
-        public function result(data:Object):void { }
+        public function result(data:Object):void
+        {
+        }
 
         public function fault(info:Object):void
         {

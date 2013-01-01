@@ -7,6 +7,8 @@ package nz.co.codec.flexorm.metamodel
          */
         public var column:String;
 
+        public var type:String;
+
         /**
          * Property name
          */
@@ -24,7 +26,7 @@ package nz.co.codec.flexorm.metamodel
 
         public var strategy:String;
 
-        public function PrimaryKey(hash:Object=null)
+        public function PrimaryKey(hash:Object = null)
         {
             for (var key:String in hash)
             {

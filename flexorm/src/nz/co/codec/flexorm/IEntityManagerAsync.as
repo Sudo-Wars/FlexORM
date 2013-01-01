@@ -22,7 +22,7 @@ package nz.co.codec.flexorm
 
         function loadItemByCompositeKey(cls:Class, keys:Array, responder:IResponder):void;
 
-        function save(obj:Object, responder:IResponder, opt:Object=null):void;
+        function save(obj:Object, responder:IResponder, opt:Object = null):void;
 
         function remove(obj:Object, responder:IResponder):void;
 

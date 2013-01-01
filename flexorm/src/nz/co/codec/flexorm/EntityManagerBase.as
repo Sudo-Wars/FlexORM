@@ -1,11 +1,14 @@
+/*
+ * Copyright (c) 2011.
+ * @author - Seyran Sitshayev <seyrancom@gmail.com>
+ */
+
 package nz.co.codec.flexorm
 {
     import flash.data.SQLConnection;
     import flash.utils.Dictionary;
     import flash.utils.getDefinitionByName;
     import flash.utils.getQualifiedClassName;
-
-    import mx.collections.ArrayCollection;
 
     import nz.co.codec.flexorm.command.InsertCommand;
     import nz.co.codec.flexorm.command.SQLParameterisedCommand;
@@ -43,10 +46,21 @@ package nz.co.codec.flexorm
 
         public function EntityManagerBase()
         {
+            super();
+            init();
+        }
+
+        protected function init():void
+        {
             _schema = DEFAULT_SCHEMA;
             _prefs = {};
             _prefs.namingStrategy = NamingStrategy.UNDERSCORE_NAMES;
             _prefs.syncSupport = false;
+            //TODO research this
+            //_prefs.auditable = true;
+            _prefs.auditable = false;
+            //_prefs.markForDeletion = true;
+            _prefs.markForDeletion = false;
             _debugLevel = 0;
             _entityMap = {};
             clearCache();
@@ -93,6 +107,7 @@ package nz.co.codec.flexorm
         /**
          * Valid preferences include:
          *
+         * - schema:String
          * - namingStrategy:String
          *     Valid values:
          *       NamingStrategy.UNDERSCORE
@@ -100,15 +115,23 @@ package nz.co.codec.flexorm
          *         FlexORM versions prior to 0.8 used camelCase.
          *
          * - syncSupport:Boolean
+         * - auditable:Boolean
+         * - markForDeletion:Boolean
          *
          */
-        public function set prefs(value:Object):void
+        public function set prefs(hash:Object):void
         {
-            if (value)
+            if (hash)
             {
-                _prefs = value;
-                if (value.hasOwnProperty("schema"))
-                    _schema = value.schema;
+                if (hash.hasOwnProperty("schema"))
+                    _schema = hash.schema;
+                for (var key:String in hash)
+                {
+                    if (_prefs.hasOwnProperty(key))
+                    {
+                        _prefs[key] = hash[key];
+                    }
+                }
             }
         }
 
@@ -134,8 +157,8 @@ package nz.co.codec.flexorm
         protected function getClass(obj:Object):Class
         {
             return (obj is PersistentEntity) ?
-                obj.__class :
-                Class(getDefinitionByName(getQualifiedClassName(obj)));
+                    obj.__class :
+                    Class(getDefinitionByName(getQualifiedClassName(obj)));
         }
 
         protected function getIdentityMap(key:String, id:*):Object
@@ -214,7 +237,7 @@ package nz.co.codec.flexorm
         {
             for each(var f:Field in entity.fields)
             {
-                if (entity.hasCompositeKey() || (f.property != entity.pk.property))
+                if (!f.isCompositeColumn && (entity.hasCompositeKey() || (f.property != entity.pk.property)))
                 {
                     command.setParam(f.property, obj[f.property]);
                 }
@@ -247,13 +270,19 @@ package nz.co.codec.flexorm
 
         protected function setInsertTimestampParams(insertCommand:InsertCommand):void
         {
-            insertCommand.setParam("createdAt", new Date());
-            insertCommand.setParam("updatedAt", new Date());
+            if (_prefs.syncSupport || _prefs.auditable)
+            {
+                insertCommand.setParam("createdAt", new Date());
+                insertCommand.setParam("updatedAt", new Date());
+            }
         }
 
         protected function setUpdateTimestampParams(updateCommand:UpdateCommand):void
         {
-            updateCommand.setParam("updatedAt", new Date());
+            if (_prefs.syncSupport || _prefs.auditable)
+            {
+                updateCommand.setParam("updatedAt", new Date());
+            }
         }
 
         protected function isCascadeSave(a:Association):Boolean
@@ -330,12 +359,12 @@ package nz.co.codec.flexorm
             cachedChildrenMap = {};
         }
 
-        protected function getCachedChildren(parentId:int):ArrayCollection
+        protected function getCachedChildren(parentId:int):Array
         {
-            var coll:ArrayCollection = cachedChildrenMap[parentId];
+            var coll:Array = cachedChildrenMap[parentId];
             if (coll == null)
             {
-                coll = new ArrayCollection();
+                coll = new Array();
                 cachedChildrenMap[parentId] = coll;
             }
             return coll;

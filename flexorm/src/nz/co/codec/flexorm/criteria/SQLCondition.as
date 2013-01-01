@@ -22,5 +22,11 @@ package nz.co.codec.flexorm.criteria
             return _sql;
         }
 
+        //TODO remove hack
+        public function get isCompositeColumn():Boolean
+        {
+            return false;
+        }
+
     }
 }

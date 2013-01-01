@@ -4,16 +4,16 @@ package nz.co.codec.flexorm.criteria
 
     public class Sort extends Condition
     {
-        public static const ASC :String = "asc";
+        public static const ASC:String = "asc";
 
         public static const DESC:String = "desc";
 
         private var _order:String;
 
-        public function Sort(table:String, column:String, order:String=null)
+        public function Sort(table:String, column:String, order:String = null, isCompositeColumn:Boolean = false)
         {
-            super(table, column);
-            switch (order)
+            super(table, column, isCompositeColumn);
+            switch(order)
             {
                 case DESC:
                     _order = DESC;

@@ -71,7 +71,7 @@ package nz.co.codec.flexorm.util
                 memberProperties.push(desc.factory.variable.@name[x]);
 
             return { statics: { methods: staticMethods, properties: staticProperties },
-                     members: { methods: memberMethods, properties: memberProperties } };
+                members: { methods: memberMethods, properties: memberProperties } };
         }
 
     }

@@ -10,11 +10,7 @@ package nz.co.codec.flexorm.command
     {
         private var _lastInsertRowID:int;
 
-        public function InsertCommand(
-            sqlConnection:SQLConnection,
-            schema:String,
-            table:String,
-            debugLevel:int=0)
+        public function InsertCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int = 0)
         {
             super(sqlConnection, schema, table, debugLevel);
         }
@@ -35,14 +31,18 @@ package nz.co.codec.flexorm.command
                 sql += StringUtil.substitute("{0},", column);
                 values += StringUtil.substitute("{0},", _columns[column]);
             }
-            sql = sql.substring(0, sql.length-1) + values.substring(0, values.length-1) + ")";
+            sql = sql.substring(0, sql.length - 1) + values.substring(0, values.length - 1) + ")";
             _statement.text = sql;
             _changed = false;
         }
 
         override protected function respond(event:SQLEvent):void
         {
-            _lastInsertRowID = _sqlConnection.lastInsertRowID;
+            // Causing intermittent issue of returning the ID of the next
+            // inserted record in a one-to-many list
+//            _lastInsertRowID = _sqlConnection.lastInsertRowID;
+
+            _lastInsertRowID = _statement.getResult().lastInsertRowID;
             _responder.result(_lastInsertRowID);
         }
 

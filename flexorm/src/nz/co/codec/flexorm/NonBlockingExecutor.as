@@ -1,7 +1,5 @@
 package nz.co.codec.flexorm
 {
-    import flash.utils.getQualifiedClassName;
-
     public class NonBlockingExecutor extends Executor
     {
         public function NonBlockingExecutor()

@@ -6,5 +6,7 @@ package nz.co.codec.flexorm.metamodel
 
         public static const UID:String = "uid";
 
+        public static const ASSIGNED:String = "assigned";
+
     }
 }

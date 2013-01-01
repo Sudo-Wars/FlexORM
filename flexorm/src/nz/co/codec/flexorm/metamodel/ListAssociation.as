@@ -26,7 +26,7 @@ package nz.co.codec.flexorm.metamodel
 
         private var _associatedTypes:Array = [];
 
-        public function ListAssociation(hash:Object=null)
+        public function ListAssociation(hash:Object = null)
         {
             super(hash);
         }

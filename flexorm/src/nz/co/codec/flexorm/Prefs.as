@@ -6,6 +6,9 @@ package nz.co.codec.flexorm
 
         public static const SYNC_SUPPORT:String = "syncSupport";
 
+        public static const AUDITABLE:String = "auditable";
+
+        public static const MARK_FOR_DELETION:String = "markForDeletion";
 
         // ***********************************************************
         // For setting the index of an item in an indexed collection
@@ -13,7 +16,6 @@ package nz.co.codec.flexorm
         public static const OWNER_CLASS:String = "ownerClass";
 
         public static const INDEX_VALUE:String = "indexValue";
-
 
         // ***********************************************************
         // For setting the left boundary of a nested item

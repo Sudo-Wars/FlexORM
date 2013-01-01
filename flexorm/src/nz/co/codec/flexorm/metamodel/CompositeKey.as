@@ -22,7 +22,7 @@ package nz.co.codec.flexorm.metamodel
             return _property;
         }
 
-        public function CompositeKey(hash:Object=null)
+        public function CompositeKey(hash:Object = null)
         {
             for (var key:String in hash)
             {

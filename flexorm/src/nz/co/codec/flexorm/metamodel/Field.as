@@ -8,7 +8,14 @@ package nz.co.codec.flexorm.metamodel
 
         public var type:String;
 
-        public function Field(hash:Object=null)
+        public var expression:String = null;
+
+        public function get isCompositeColumn():Boolean
+        {
+            return expression != null;
+        }
+
+        public function Field(hash:Object = null)
         {
             for (var key:String in hash)
             {

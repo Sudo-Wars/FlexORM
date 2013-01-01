@@ -7,7 +7,7 @@ package nz.co.codec.flexorm.command
     {
         private var _result:Array;
 
-        public function SelectMaxRgtCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int=0)
+        public function SelectMaxRgtCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int = 0)
         {
             super(sqlConnection, schema, table, debugLevel);
             _statement.text = "select max(rgt) as max_rgt from " + schema + "." + table;

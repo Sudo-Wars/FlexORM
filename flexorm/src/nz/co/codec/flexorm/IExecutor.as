@@ -4,7 +4,7 @@ package nz.co.codec.flexorm
 
     public interface IExecutor extends ICommand, IResponder
     {
-        function add(command:ICommand, resultHandler:Function=null):void;
+        function add(command:ICommand, resultHandler:Function = null):void;
 
         function get parent():IExecutor;
 

@@ -8,7 +8,7 @@ package nz.co.codec.flexorm.criteria
     {
         public static const AND:String = " and ";
 
-        public static const OR :String = " or ";
+        public static const OR:String = " or ";
 
         public static function and(entity:Entity):Junction
         {
@@ -26,10 +26,10 @@ package nz.co.codec.flexorm.criteria
 
         private var _filters:Array;
 
-        public function Junction(entity:Entity, type:String=null)
+        public function Junction(entity:Entity, type:String = null)
         {
             _entity = entity;
-            switch (type)
+            switch(type)
             {
                 case OR:
                     _type = OR;

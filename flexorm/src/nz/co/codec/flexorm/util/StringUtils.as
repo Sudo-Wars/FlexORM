@@ -65,7 +65,7 @@ package nz.co.codec.flexorm.util
 
         public static function startLowerCase(str:String):String
         {
-            return str.substr(0,1).toLowerCase() + str.substr(1);
+            return str.substr(0, 1).toLowerCase() + str.substr(1);
         }
 
         public static function isLowerCase(str:String, pos:int = 0):Boolean
@@ -94,7 +94,7 @@ package nz.co.codec.flexorm.util
             if (str == null)
                 return defaultValue;
 
-            switch (StringUtil.trim(str))
+            switch(StringUtil.trim(str))
             {
                 case "":
                     return defaultValue;

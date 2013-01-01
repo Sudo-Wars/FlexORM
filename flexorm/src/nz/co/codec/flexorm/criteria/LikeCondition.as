@@ -4,9 +4,9 @@ package nz.co.codec.flexorm.criteria
     {
         private var _str:String;
 
-        public function LikeCondition(table:String, column:String, str:String)
+        public function LikeCondition(table:String, column:String, str:String, isCompositeColumn:Boolean = false)
         {
-            super(table, column);
+            super(table, column, isCompositeColumn);
             _str = str;
         }
 

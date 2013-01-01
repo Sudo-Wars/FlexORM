@@ -52,7 +52,7 @@ package nz.co.codec.flexorm.metamodel
             return _associationTable;
         }
 
-        public function ManyToManyAssociation(hash:Object=null)
+        public function ManyToManyAssociation(hash:Object = null)
         {
             super(hash);
         }

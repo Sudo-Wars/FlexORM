@@ -93,7 +93,7 @@ package nz.co.codec.flexorm.metamodel
             return _cascadeType;
         }
 
-        public function Association(hash:Object=null)
+        public function Association(hash:Object = null)
         {
             _cascadeType = CascadeType.SAVE_UPDATE;
             for (var key:String in hash)

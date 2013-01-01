@@ -6,11 +6,7 @@ package nz.co.codec.flexorm.command
 
     public class SQLParameterisedCommand extends SQLCommand
     {
-        public function SQLParameterisedCommand(
-            sqlConnection:SQLConnection,
-            schema:String,
-            table:String,
-            debugLevel:int=0)
+        public function SQLParameterisedCommand(sqlConnection:SQLConnection, schema:String, table:String, debugLevel:int = 0)
         {
             super(sqlConnection, schema, table, debugLevel);
         }

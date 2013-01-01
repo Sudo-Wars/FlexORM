@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2011.
+ * @author - Seyran Sitshayev <seyrancom@gmail.com>
+ */
+
 package nz.co.codec.flexorm
 {
     import flash.data.SQLConnection;
@@ -6,6 +11,7 @@ package nz.co.codec.flexorm
     import flash.utils.getQualifiedClassName;
 
     import mx.collections.ArrayCollection;
+    import mx.collections.ArrayList;
     import mx.collections.IList;
     import mx.utils.StringUtil;
 
@@ -21,6 +27,7 @@ package nz.co.codec.flexorm
     import nz.co.codec.flexorm.command.UpdateNestedSetsCommand;
     import nz.co.codec.flexorm.command.UpdateNestedSetsLeftBoundaryCommand;
     import nz.co.codec.flexorm.command.UpdateNestedSetsRightBoundaryCommand;
+    import nz.co.codec.flexorm.command.UtilsCommand;
     import nz.co.codec.flexorm.criteria.SQLCondition;
     import nz.co.codec.flexorm.criteria.Sort;
     import nz.co.codec.flexorm.metamodel.AssociatedType;
@@ -58,12 +65,7 @@ package nz.co.codec.flexorm
 
         private var missingKey:Boolean;
 
-        public function EntityIntrospector(
-            schema:String,
-            sqlConnection:SQLConnection,
-            entityMap:Object,
-            debugLevel:int,
-            prefs:Object=null)
+        public function EntityIntrospector(schema:String, sqlConnection:SQLConnection, entityMap:Object, debugLevel:int, prefs:Object = null)
         {
             _schema = schema;
             _sqlConnection = sqlConnection;
@@ -95,7 +97,7 @@ package nz.co.codec.flexorm
             _prefs = value;
         }
 
-        public function loadMetadata(cls:Class, executor:IExecutor=null):Entity
+        public function loadMetadata(cls:Class, executor:IExecutor = null):Entity
         {
             deferred.length = 0;
             var entity:Entity = loadMetadataForClass(cls);
@@ -204,7 +206,7 @@ package nz.co.codec.flexorm
 
         private function createMetaTable():void
         {
-            var createCommand:CreateSynCommand = new CreateSynCommand(_sqlConnection, _schema,"sync_status", _debugLevel);
+            var createCommand:CreateSynCommand = new CreateSynCommand(_sqlConnection, _schema, "sync_status", _debugLevel);
             createCommand.addColumn("entity", SQLType.STRING);
             createCommand.addColumn("last_sync_at", SQLType.DATE);
             createCommand.execute();
@@ -296,19 +298,26 @@ package nz.co.codec.flexorm
             {
                 // Skip properties of superclass
                 var declaredBy:String = v.@declaredBy.toString();
-                if (declaredBy.search(new RegExp(entity.className, "i")) == -1)
+                var allowInheritColumn:Boolean = StringUtil.trim(v.metadata.(@name == Tags.ELEM_COLUMN).arg.(@key == Tags.ATTR_ALLOW_INHERIT_COLUMN).@value.toString()).toLowerCase() == "true";
+                if (!allowInheritColumn && declaredBy.search(new RegExp(entity.className, "i")) == -1)
                     continue;
 
-                var type:Class = getClass(v.@type); // associated object class
-                var typeQName:String = getQualifiedClassName(type);
-                i = typeQName.lastIndexOf(":");
-                var typePkg:String = (i > 0) ? typeQName.substring(0, i - 1) : null;
-                var property:String = v.@name.toString();
-                var column:String;
-
+                if (v.@type != "*")
+                {
+                    var type:Class = getClass(v.@type); // associated object class
+                    var typeQName:String = getQualifiedClassName(type);
+                    i = typeQName.lastIndexOf(":");
+                    var typePkg:String = (i > 0) ? typeQName.substring(0, i - 1) : null;
+                    var property:String = v.@name.toString();
+                    var column:String;
+                }
                 if (v.metadata.(@name == Tags.ELEM_COLUMN).length() > 0)
                 {
                     column = extractColumn(v, entity, property);
+                }
+                else if (v.metadata.(@name == Tags.ELEM_COMPOSITE_COLUMN).length() > 0)
+                {
+                    column = extractCompositeColumn(v, entity, property);
                 }
                 else if (v.metadata.(@name == Tags.ELEM_MANY_TO_ONE).length() > 0)
                 {
@@ -346,23 +355,24 @@ package nz.co.codec.flexorm
                 else
                 {
                     column = usingCamelCaseNames() ?
-                        property : StringUtils.underscore(property).toLowerCase();
+                            property : StringUtils.underscore(property).toLowerCase();
 
                     entity.addField(new Field(
-                    {
-                        property: property,
-                        column  : column,
-                        type    : getSQLType(v.@type)
-                    }));
+                            {
+                                property: property,
+                                column  : column,
+                                type    : getSQLType(v.@type)
+                            }));
 
                     if ((defaultKey == null) && StringUtils.endsWith(property.toLowerCase(), "id"))
                     {
                         defaultKey = new PrimaryKey(
-                        {
-                            column  : column,
-                            property: property,
-                            strategy: getIDStrategy(v.@type)
-                        });
+                                {
+                                    column  : column,
+                                    property: property,
+                                    strategy: getIDStrategy(v.@type),
+                                    type    : getSQLType(v.@type)
+                                });
                     }
                 }
 
@@ -373,16 +383,17 @@ package nz.co.codec.flexorm
                     {
                         strategy = getIDStrategy(v.@type);
                     }
-                    else if (strategy != getIDStrategy(v.@type))
+                    else if (strategy != IDStrategy.ASSIGNED && strategy != getIDStrategy(v.@type))
                         throw new Error("The data type '" + v.@type + "' of the ID for " + entity.name +
-                                        " is not compatible with the '" + strategy + "' strategy. ");
+                                " is not compatible with the '" + strategy + "' strategy. ");
 
                     entity.addKey(new PrimaryKey(
-                    {
-                        column  : column,
-                        property: property,
-                        strategy: strategy
-                    }));
+                            {
+                                column  : column,
+                                property: property,
+                                strategy: strategy,
+                                type    : getSQLType(v.@type)
+                            }));
                     missingKey = false;
                 }
             }
@@ -446,6 +457,20 @@ package nz.co.codec.flexorm
                 superEntity.addSubEntity(entity);
                 entity.addDependency(superEntity);
             }
+            //TODO remove hack
+            /*            else if (inheritsFrom != null && inheritsFrom.length > 0 && getClass(inheritsFrom) != null)
+             {
+             var cls2:Class = getClass(inheritsFrom);
+             var cn2:String = getClassName(cls2);
+             var superEntity2:Entity = _entityMap[cn2];
+             if (superEntity2 == null)
+             {
+             superEntity2 = getEntity(cls2, cn2);
+             deferred.push(cls2);
+             }
+             superEntity2.addSubEntity(entity);
+             entity.addDependency(superEntity2);
+             }*/
         }
 
         private function extractColumn(v:Object, entity:Entity, property:String):String
@@ -454,14 +479,36 @@ package nz.co.codec.flexorm
             if (column == null || column.length == 0)
             {
                 column = usingCamelCaseNames() ?
-                    property : StringUtils.underscore(property).toLowerCase();
+                        property : StringUtils.underscore(property).toLowerCase();
             }
             entity.addField(new Field(
+                    {
+                        property: property,
+                        column  : column,
+                        type    : getSQLType(v.@type),
+                        expression    : null
+                    }
+
+            ))
+                    ;
+            return column;
+        }
+
+        private function extractCompositeColumn(v:Object, entity:Entity, property:String):String
+        {
+            var column:String = StringUtil.trim(v.metadata.(@name == Tags.ELEM_COMPOSITE_COLUMN).arg.(@key == Tags.ATTR_NAME).@value.toString());
+            if (column == null || column.length == 0)
             {
-                property: property,
-                column  : column,
-                type    : getSQLType(v.@type)
-            }));
+                column = usingCamelCaseNames() ?
+                        property : StringUtils.underscore(property).toLowerCase();
+            }
+            entity.addField(new Field(
+                    {
+                        property: property,
+                        column  : column,
+                        type    : getSQLType(v.@type),
+                        expression: StringUtil.trim(v.metadata.(@name == Tags.ELEM_COMPOSITE_COLUMN).arg.(@key == Tags.ATTR_EXPRESSION).@value.toString())
+                    }));
             return column;
         }
 
@@ -498,10 +545,10 @@ package nz.co.codec.flexorm
             if (v.metadata.(@name == Tags.ELEM_ID).length() > 0)
             {
                 entity.addKey(new CompositeKey(
-                {
-                    property        : property,
-                    associatedEntity: associatedEntity
-                }));
+                        {
+                            property        : property,
+                            associatedEntity: associatedEntity
+                        }));
                 cascadeType = CascadeType.NONE;
                 missingKey = false;
             }
@@ -514,16 +561,16 @@ package nz.co.codec.flexorm
             }
 
             entity.addManyToOneAssociation(new Association(
-            {
-                property        : property,
-                fkColumn        : fkColumn,
-                fkProperty      : fkProperty,
-                associatedEntity: associatedEntity,
-                cascadeType     : cascadeType,
-                inverse         : inverse,
-                constrain       : constrain,
-                hierarchical    : associationIsHierarchical
-            }));
+                    {
+                        property        : property,
+                        fkColumn        : fkColumn,
+                        fkProperty      : fkProperty,
+                        associatedEntity: associatedEntity,
+                        cascadeType     : cascadeType,
+                        inverse         : inverse,
+                        constrain       : constrain,
+                        hierarchical    : associationIsHierarchical
+                    }));
             entity.addDependency(associatedEntity);
         }
 
@@ -545,13 +592,13 @@ package nz.co.codec.flexorm
             }
 
             entity.addManyToOneAssociation(new Association(
-            {
-                property        : property,
-                fkColumn        : associatedEntity.fkColumn,
-                fkProperty      : associatedEntity.fkProperty,
-                associatedEntity: associatedEntity,
-                hierarchical    : associationIsHierarchical
-            }));
+                    {
+                        property        : property,
+                        fkColumn        : associatedEntity.fkColumn,
+                        fkProperty      : associatedEntity.fkProperty,
+                        associatedEntity: associatedEntity,
+                        hierarchical    : associationIsHierarchical
+                    }));
             entity.addDependency(associatedEntity);
         }
 
@@ -600,20 +647,20 @@ package nz.co.codec.flexorm
             var associatedTypes:Array = [];
 
             var a:OneToManyAssociation = new OneToManyAssociation(
-            {
-                property       : property,
-                multiTyped     : (types.length > 1),
-                associatedTypes: associatedTypes,
-                cascadeType    : cascadeType,
-                lazy           : lazy,
-                inverse        : inverse,
-                constrain      : constrain,
-                fkColumn       : fkColumn,
-                fkProperty     : fkProperty,
-                indexed        : indexed,
-                indexColumn    : indexColumn,
-                indexProperty  : indexProperty
-            });
+                    {
+                        property       : property,
+                        multiTyped     : (types.length > 1),
+                        associatedTypes: associatedTypes,
+                        cascadeType    : cascadeType,
+                        lazy           : lazy,
+                        inverse        : inverse,
+                        constrain      : constrain,
+                        fkColumn       : fkColumn,
+                        fkProperty     : fkProperty,
+                        indexed        : indexed,
+                        indexColumn    : indexColumn,
+                        indexProperty  : indexProperty
+                    });
 
             entity.addOneToManyAssociation(a); // also sets the ownerEntity as entity
 
@@ -656,12 +703,12 @@ package nz.co.codec.flexorm
             }
 
             var a:OneToManyAssociation = new OneToManyAssociation(
-            {
-                property        : property,
-                associatedEntity: associatedEntity,
-                fkColumn        : entity.fkColumn,
-                fkProperty      : entity.fkProperty
-            });
+                    {
+                        property        : property,
+                        associatedEntity: associatedEntity,
+                        fkColumn        : entity.fkColumn,
+                        fkProperty      : entity.fkProperty
+                    });
             associatedEntity.addOneToManyInverseAssociation(a);
             entity.addOneToManyAssociation(a); // also sets the ownerEntity as entity
             associatedEntity.addDependency(entity);
@@ -703,17 +750,17 @@ package nz.co.codec.flexorm
             }
 
             var a:ManyToManyAssociation = new ManyToManyAssociation(
-            {
-                property        : property,
-                associationTable: associationTable,
-                associatedEntity: associatedEntity,
-                cascadeType     : cascadeType,
-                lazy            : lazy,
-                constrain       : constrain,
-                indexed         : indexed,
-                indexColumn     : indexColumn,
-                indexProperty   : indexProperty
-            });
+                    {
+                        property        : property,
+                        associationTable: associationTable,
+                        associatedEntity: associatedEntity,
+                        cascadeType     : cascadeType,
+                        lazy            : lazy,
+                        constrain       : constrain,
+                        indexed         : indexed,
+                        indexColumn     : indexColumn,
+                        indexProperty   : indexProperty
+                    });
             associatedEntity.addManyToManyInverseAssociation(a);
             entity.addManyToManyAssociation(a);
             associatedEntity.addDependency(entity);
@@ -735,7 +782,7 @@ package nz.co.codec.flexorm
          * paths to them. The tops of the identity graph are expected to
          * be entities with primary keys.
          */
-        private function getIdentities(entity:Entity, path:Array=null):Array
+        private function getIdentities(entity:Entity, path:Array = null):Array
         {
             if (path == null)
                 path = [];
@@ -753,26 +800,26 @@ package nz.co.codec.flexorm
                     if (path.length == 0)
                     {
                         identities.push(new Identity(
-                        {
-                            property  : pk.property,
-                            column    : pk.column,
-                            fkProperty: entity.fkProperty,
-                            fkColumn  : entity.fkColumn,
-                            strategy  : pk.strategy,
-                            path      : []
-                        }));
+                                {
+                                    property  : pk.property,
+                                    column    : pk.column,
+                                    fkProperty: entity.fkProperty,
+                                    fkColumn  : entity.fkColumn,
+                                    strategy  : pk.strategy,
+                                    path      : []
+                                }));
                     }
                     else
                     {
                         identities.push(new Identity(
-                        {
-                            property  : entity.fkProperty,
-                            column    : entity.fkColumn,
-                            fkProperty: entity.fkProperty,
-                            fkColumn  : entity.fkColumn,
-                            strategy  : pk.strategy,
-                            path      : path.concat(key)
-                        }));
+                                {
+                                    property  : entity.fkProperty,
+                                    column    : entity.fkColumn,
+                                    fkProperty: entity.fkProperty,
+                                    fkColumn  : entity.fkColumn,
+                                    strategy  : pk.strategy,
+                                    path      : path.concat(key)
+                                }));
                     }
                 }
             }
@@ -783,6 +830,21 @@ package nz.co.codec.flexorm
         {
             var table:String = entity.table;
 
+            var utilsCommand:UtilsCommand = entity.utilsCommand;
+            if (utilsCommand == null)
+            {
+                /*       utilsCommand = new UtilsCommand(_sqlConnection, _schema, table, _debugLevel);
+                 if (!entity.hasCompositeKey())
+                 {
+                 utilsCommand.setPrimaryKey(entity.pk);
+                 }
+                 else
+                 {
+                 //TODO implement for CompositeKey
+                 // utilsCommand.setCompositeKey(entity.getColumn());
+                 }
+                 entity.utilsCommand = utilsCommand;*/
+            }
             var selectCommand:SelectCommand = entity.selectCommand;
             if (selectCommand == null)
             {
@@ -850,7 +912,8 @@ package nz.co.codec.flexorm
                 selectServerKeyMapCommand.addColumn(pk.column);
                 selectServerKeyMapCommand.addColumn("server_id");
                 selectServerKeyMapCommand.addColumn("version");
-                idSQLType = getSQLTypeForID(pk.strategy);
+//                idSQLType = getSQLTypeForID(pk.strategy);
+                idSQLType = pk.type;
                 if (entity.superEntity)
                 {
                     insertCommand.addColumn(pk.column, entity.fkProperty);
@@ -859,9 +922,9 @@ package nz.co.codec.flexorm
                 }
                 else
                 {
-                    createSynCommand.setPrimaryKey(pk.column, pk.strategy);
+                    createSynCommand.setPrimaryKey(pk.column, pk.strategy, pk.type);
                     createAsynCommand.setPrimaryKey(pk.column, pk.strategy);
-                    if (IDStrategy.UID == pk.strategy)
+                    if (IDStrategy.UID == pk.strategy || IDStrategy.ASSIGNED == pk.strategy)
                         insertCommand.addColumn(pk.column, entity.fkProperty);
                 }
                 indexName = indexTableName + "_" + pk.column + "_idx";
@@ -902,27 +965,41 @@ package nz.co.codec.flexorm
             {
                 if (entity.hasCompositeKey() || (pk.property != f.property))
                 {
-                    selectCommand.addColumn(f.column, f.property);
-                    insertCommand.addColumn(f.column, f.property);
-                    updateCommand.addColumn(f.column, f.property);
-                    createSynCommand.addColumn(f.column, f.type);
-                    createAsynCommand.addColumn(f.column, f.type);
+                    // TODO improving code
+                    if (f.isCompositeColumn)
+                    {
+                        selectCommand.addCompositeColumn(f.column, f.property, f.expression);
+                    }
+                    else
+                    {
+                        selectCommand.addColumn(f.column, f.property);
+                        insertCommand.addColumn(f.column, f.property);
+                        updateCommand.addColumn(f.column, f.property);
+                        createSynCommand.addColumn(f.column, f.type);
+                        createAsynCommand.addColumn(f.column, f.type);
+                    }
                 }
             }
 
-            insertCommand.addColumn("created_at", "createdAt");
-            insertCommand.addColumn("updated_at", "updatedAt");
-            insertCommand.addColumn("marked_for_deletion", "markedForDeletion");
-            updateCommand.addColumn("updated_at", "updatedAt");
-            createSynCommand.addColumn("created_at", SQLType.DATE);
-            createSynCommand.addColumn("updated_at", SQLType.DATE);
-            createSynCommand.addColumn("marked_for_deletion", SQLType.BOOLEAN);
-            createAsynCommand.addColumn("created_at", SQLType.DATE);
-            createAsynCommand.addColumn("updated_at", SQLType.DATE);
-            createAsynCommand.addColumn("marked_for_deletion", SQLType.BOOLEAN);
-            selectAllCommand.addSQLCondition("marked_for_deletion<>true");
-            markForDeletionCommand.addColumn("marked_for_deletion", "markedForDeletion");
-            markForDeletionCommand.setParam("markedForDeletion", true);
+            if (_prefs.syncSupport || _prefs.auditable)
+            {
+                insertCommand.addColumn("created_at", "createdAt");
+                insertCommand.addColumn("updated_at", "updatedAt");
+                updateCommand.addColumn("updated_at", "updatedAt");
+                createSynCommand.addColumn("created_at", SQLType.DATE);
+                createSynCommand.addColumn("updated_at", SQLType.DATE);
+                createAsynCommand.addColumn("created_at", SQLType.DATE);
+                createAsynCommand.addColumn("updated_at", SQLType.DATE);
+            }
+            if (_prefs.syncSupport || _prefs.markForDeletion)
+            {
+                insertCommand.addColumn("marked_for_deletion", "markedForDeletion");
+                createSynCommand.addColumn("marked_for_deletion", SQLType.BOOLEAN);
+                createAsynCommand.addColumn("marked_for_deletion", SQLType.BOOLEAN);
+                selectAllCommand.addSQLCondition("marked_for_deletion<>true");
+                markForDeletionCommand.addColumn("marked_for_deletion", "markedForDeletion");
+                markForDeletionCommand.setParam("markedForDeletion", true);
+            }
 
             if (entity.isSuperEntity())
             {
@@ -1143,7 +1220,8 @@ package nz.co.codec.flexorm
             entity.selectServerKeyMapCommand = selectServerKeyMapCommand;
             entity.selectUpdatedCommand = selectUpdatedCommand;
             entity.updateVersionCommand = updateVersionCommand;
-            entity.indexCommands = indexCommands;
+            //TODO error occur on add indexes
+            //entity.indexCommands = indexCommands;
         }
 
         private function buildOneToManySQLCommands(entity:Entity):void
@@ -1300,12 +1378,12 @@ package nz.co.codec.flexorm
         private function getClassNameLower(cls:Class):String
         {
             var cn:String = getClassName(cls);
-            return cn.substr(0,1).toLowerCase() + cn.substr(1);
+            return cn.substr(0, 1).toLowerCase() + cn.substr(1);
         }
 
         private function getSQLType(asType:String):String
         {
-            switch (asType)
+            switch(asType)
             {
                 case "int" || "uint":
                     return SQLType.INTEGER;
@@ -1326,7 +1404,7 @@ package nz.co.codec.flexorm
 
         private function getIDStrategy(asType:String):String
         {
-            switch (asType)
+            switch(asType)
             {
                 case "String":
                     return IDStrategy.UID;
@@ -1338,7 +1416,7 @@ package nz.co.codec.flexorm
 
         private function getSQLTypeForID(idStrategy:String):String
         {
-            switch (idStrategy)
+            switch(idStrategy)
             {
                 case IDStrategy.UID:
                     return SQLType.STRING;
@@ -1358,7 +1436,7 @@ package nz.co.codec.flexorm
             return getEntity(getClass(asType));
         }
 
-        private function getEntity(cls:Class, cn:String=null, c_n:String=null):Entity
+        private function getEntity(cls:Class, cn:String = null, c_n:String = null):Entity
         {
             if (cn == null)
                 cn = getClassName(cls);
@@ -1390,9 +1468,6 @@ package nz.co.codec.flexorm
             }
             return entity;
         }
-
-
-
 
         /**
          * Sandbox feature: requires persistence of metadata such as in the
@@ -1444,7 +1519,7 @@ package nz.co.codec.flexorm
             for (var property:String in obj)
             {
                 var column:String = usingCamelCaseNames() ?
-                    property : StringUtils.underscore(property);
+                        property : StringUtils.underscore(property);
 
                 var associatedEntity:Entity;
                 var value:Object = obj[property];
@@ -1456,15 +1531,15 @@ package nz.co.codec.flexorm
                     {
                         associatedEntity = loadMetadataForObject(value, property, root);
                         entity.addManyToOneAssociation(new Association(
-                        {
-                            property        : property,
-                            associatedEntity: associatedEntity,
-                            fkColumn        : associatedEntity.fkColumn,
-                            fkProperty      : associatedEntity.fkProperty
-                        }));
+                                {
+                                    property        : property,
+                                    associatedEntity: associatedEntity,
+                                    fkColumn        : associatedEntity.fkColumn,
+                                    fkProperty      : associatedEntity.fkProperty
+                                }));
                     }
 
-                    else if ((value is Array || value is ArrayCollection) && (value.length > 0))
+                    else if ((value is Array || value is ArrayList || value is ArrayCollection) && (value.length > 0))
                     {
                         for each(var item:Object in value)
                         {
@@ -1496,12 +1571,12 @@ package nz.co.codec.flexorm
                         type.associatedEntity = associatedEntity;
                         associatedTypes.push(type);
                         var a:OneToManyAssociation = new OneToManyAssociation(
-                        {
-                            property       : property,
-                            associatedTypes: associatedTypes,
-                            fkColumn       : entity.fkColumn,
-                            fkProperty     : entity.fkProperty
-                        });
+                                {
+                                    property       : property,
+                                    associatedTypes: associatedTypes,
+                                    fkColumn       : entity.fkColumn,
+                                    fkProperty     : entity.fkProperty
+                                });
                         associatedEntity.addOneToManyInverseAssociation(a);
                         entity.addOneToManyAssociation(a); // also sets the ownerEntity as entity
                     }
@@ -1509,11 +1584,11 @@ package nz.co.codec.flexorm
                     else
                     {
                         entity.addField(new Field(
-                        {
-                            property: property,
-                            column  : column,
-                            type    : getSQLType(cn)
-                        }));
+                                {
+                                    property: property,
+                                    column  : column,
+                                    type    : getSQLType(cn)
+                                }));
                     }
                 }
             }
@@ -1521,11 +1596,11 @@ package nz.co.codec.flexorm
             var key:String = "__id";
             obj[key] = 0;
             entity.addKey(new PrimaryKey(
-            {
-                property: key,
-                column  : entity.fkColumn,
-                strategy: IDStrategy.AUTO_INCREMENT
-            }));
+                    {
+                        property: key,
+                        column  : entity.fkColumn,
+                        strategy: IDStrategy.AUTO_INCREMENT
+                    }));
             entity.identities = getIdentities(entity);
             buildSQLCommands(entity);
             entity.createSynCommand.execute();

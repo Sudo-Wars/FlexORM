@@ -31,15 +31,15 @@ package nz.co.codec.flexorm.command
         {
             _sqlConnection.commit(new Responder(
 
-                function(ev:SQLEvent):void
-                {
-                    _responder.result(new EntityEvent(ev.type));
-                },
+                    function(ev:SQLEvent):void
+                    {
+                        _responder.result(new EntityEvent(ev.type));
+                    },
 
-                function(e:SQLError):void
-                {
-                    _responder.fault(new EntityErrorEvent(e.details, e));
-                }
+                    function(e:SQLError):void
+                    {
+                        _responder.fault(new EntityErrorEvent(e.details, e));
+                    }
             ));
         }
 

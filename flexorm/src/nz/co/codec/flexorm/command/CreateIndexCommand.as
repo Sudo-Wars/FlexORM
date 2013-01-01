@@ -10,12 +10,7 @@ package nz.co.codec.flexorm.command
 
         private var indexColumns:Array;
 
-        public function CreateIndexCommand(
-            sqlConnection:SQLConnection,
-            schema:String,
-            table:String,
-            name:String,
-            debugLevel:int=0)
+        public function CreateIndexCommand(sqlConnection:SQLConnection, schema:String, table:String, name:String, debugLevel:int = 0)
         {
             super(sqlConnection, schema, table, debugLevel);
             _name = name;
@@ -31,7 +26,7 @@ package nz.co.codec.flexorm.command
         override protected function prepareStatement():void
         {
             var sql:String = StringUtil.substitute("create index if not exists {0}.{1}_{2}_idx on {3}(",
-                    _schema, _name? _name : _table, indexColumns[0], _table);
+                    _schema, _name ? _name : _table, indexColumns[0], _table);
             for each(var column:String in indexColumns)
             {
                 sql += StringUtil.substitute("{0} asc,", column);

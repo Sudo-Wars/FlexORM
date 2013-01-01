@@ -1,6 +1,10 @@
+/*
+ * Copyright (c) 2011.
+ * @author - Seyran Sitshayev <seyrancom@gmail.com>
+ */
+
 package nz.co.codec.flexorm
 {
-    import mx.collections.ArrayCollection;
     import mx.collections.ArrayList;
 
     import nz.co.codec.flexorm.metamodel.IListAssociation;
@@ -42,18 +46,20 @@ package nz.co.codec.flexorm
                 _loaded = true;
                 if (_a is OneToManyAssociation)
                 {
-                    var otmAssociations:ArrayCollection = _em.loadOneToManyAssociation(OneToManyAssociation(_a), _idMap);
+                    var otmAssociations:Array = _em.loadOneToManyAssociation(OneToManyAssociation(_a), _idMap);
                     if (otmAssociations)
                     {
-                        super.source = otmAssociations.toArray();
+                        super.source = otmAssociations;
+                        dispatchEvent(new LazyListEvent(LazyListEvent.LIST_LOADED));
                     }
                 }
                 else if (_a is ManyToManyAssociation)
                 {
-                    var mtmAssociations:ArrayCollection = _em.loadManyToManyAssociation(ManyToManyAssociation(_a), _idMap);
+                    var mtmAssociations:Array = _em.loadManyToManyAssociation(ManyToManyAssociation(_a), _idMap);
                     if (mtmAssociations)
                     {
-                        super.source = mtmAssociations.toArray();
+                        super.source = mtmAssociations;
+                        dispatchEvent(new LazyListEvent(LazyListEvent.LIST_LOADED));
                     }
                 }
             }
