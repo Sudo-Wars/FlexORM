@@ -1,0 +1,1 @@
+FlexORM is an Object Relational Mapping framework for Adobe AIR. It enables JavaScript/ActionScript3 objects to become persistent objects using the embedded SQLite database; that is, you do not need to write database code or SQL.
