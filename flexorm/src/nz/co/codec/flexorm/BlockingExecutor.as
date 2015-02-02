@@ -46,7 +46,7 @@ package nz.co.codec.flexorm
                 }
                 else if (executable is Function)
                 {
-                    executable(lastResult);
+                    (executable as Function)(lastResult);
                     result(lastResult);
                 }
             }

@@ -25,7 +25,6 @@ package nz.co.codec.flexorm
     import nz.co.codec.flexorm.command.UpdateNestedSetsCommand;
     import nz.co.codec.flexorm.command.UpdateNestedSetsLeftBoundaryCommand;
     import nz.co.codec.flexorm.command.UpdateNestedSetsRightBoundaryCommand;
-    import nz.co.codec.flexorm.command.UtilsCommand;
     import nz.co.codec.flexorm.criteria.Criteria;
     import nz.co.codec.flexorm.criteria.Sort;
     import nz.co.codec.flexorm.metamodel.AssociatedType;
@@ -185,11 +184,13 @@ package nz.co.codec.flexorm
          */
         public function getUniqueId(cls:Class):int
         {
-            var entity:Entity = getEntity(cls);
-            var utilsCommand:UtilsCommand = entity.utilsCommand;
-            utilsCommand.execute();
-            clearCache();
-            return utilsCommand.getId();
+//            var entity:Entity = getEntity(cls);
+//            var utilsCommand:UtilsCommand = entity.utilsCommand;
+//            utilsCommand.execute();
+//            clearCache();
+//            return utilsCommand.getId();
+            throw new Error("getUniqueId not implementated? Missing code from original repo");
+            return int.MAX_VALUE;
         }
 
         /**
@@ -679,11 +680,11 @@ package nz.co.codec.flexorm
                 id = obj[entity.pk.property];
             }
 
-            if (entity.utilsCommand != null)
-            {
-                var utilsCommand:UtilsCommand = entity.utilsCommand;
-                utilsCommand.resetUniqueId();
-            }
+//            if (entity.utilsCommand != null)
+//            {
+//                var utilsCommand:UtilsCommand = entity.utilsCommand;
+//                utilsCommand.resetUniqueId();
+//            }
             return id;
         }
 

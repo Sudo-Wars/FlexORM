@@ -13,11 +13,10 @@ package nz.co.codec.flexorm.metamodel
     import nz.co.codec.flexorm.command.UpdateNestedSetsCommand;
     import nz.co.codec.flexorm.command.UpdateNestedSetsLeftBoundaryCommand;
     import nz.co.codec.flexorm.command.UpdateNestedSetsRightBoundaryCommand;
-    import nz.co.codec.flexorm.command.UtilsCommand;
 
     public class Entity implements IUID
     {
-        public var utilsCommand:UtilsCommand;
+//        public var utilsCommand:UtilsCommand;
 
         public var selectCommand:SelectCommand;
 

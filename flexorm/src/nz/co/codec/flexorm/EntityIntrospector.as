@@ -27,7 +27,6 @@ package nz.co.codec.flexorm
     import nz.co.codec.flexorm.command.UpdateNestedSetsCommand;
     import nz.co.codec.flexorm.command.UpdateNestedSetsLeftBoundaryCommand;
     import nz.co.codec.flexorm.command.UpdateNestedSetsRightBoundaryCommand;
-    import nz.co.codec.flexorm.command.UtilsCommand;
     import nz.co.codec.flexorm.criteria.SQLCondition;
     import nz.co.codec.flexorm.criteria.Sort;
     import nz.co.codec.flexorm.metamodel.AssociatedType;
@@ -830,21 +829,21 @@ package nz.co.codec.flexorm
         {
             var table:String = entity.table;
 
-            var utilsCommand:UtilsCommand = entity.utilsCommand;
-            if (utilsCommand == null)
-            {
-                /*       utilsCommand = new UtilsCommand(_sqlConnection, _schema, table, _debugLevel);
-                 if (!entity.hasCompositeKey())
-                 {
-                 utilsCommand.setPrimaryKey(entity.pk);
-                 }
-                 else
-                 {
-                 //TODO implement for CompositeKey
-                 // utilsCommand.setCompositeKey(entity.getColumn());
-                 }
-                 entity.utilsCommand = utilsCommand;*/
-            }
+//            var utilsCommand:UtilsCommand = entity.utilsCommand;
+//            if (utilsCommand == null)
+//            {
+//                /*       utilsCommand = new UtilsCommand(_sqlConnection, _schema, table, _debugLevel);
+//                 if (!entity.hasCompositeKey())
+//                 {
+//                 utilsCommand.setPrimaryKey(entity.pk);
+//                 }
+//                 else
+//                 {
+//                 //TODO implement for CompositeKey
+//                 // utilsCommand.setCompositeKey(entity.getColumn());
+//                 }
+//                 entity.utilsCommand = utilsCommand;*/
+//            }
             var selectCommand:SelectCommand = entity.selectCommand;
             if (selectCommand == null)
             {
